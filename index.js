@@ -4,6 +4,7 @@ import { MongoClient } from "mongodb";
 import dotenv from 'dotenv';
 import joi from "joi";
 import bcrypt from "bcrypt";
+import { v4 as uuidV4 } from "uuid";
 
 const cadastroSchema = joi.object({
     nome: joi.string().required().min(3),
@@ -29,6 +30,7 @@ try {
 const db = mongoClient.db("myWallet");
 
 const usuarios = db.collection("usuarios");
+const sessoes = db.collection("sessoes");
 
 app.post("/cadastro", async (req, res) => {
 
@@ -74,6 +76,8 @@ app.post("/login", async (req, res) => {
 
     const { email, senha } = req.body;
 
+    const token = uuidV4();
+
     try {
 
         const usuarioExiste = await usuarios.findOne({ email });
@@ -82,23 +86,69 @@ app.post("/login", async (req, res) => {
             return res.status(401).send({ message: "Esse usuário não existe" });
         };
 
-        res.send({message: `Olá ${usuarioExiste.name}, seja bem vindo(a)!`});
-
         const senhaOk = bcrypt.compareSync(senha, usuarioExiste.senha); //comparando a senha recebida com a senha do banco de dados
         console.log("senhaOk", senhaOk);
 
-        if(!senhaOk){
+        if (!senhaOk) {
             return req.sendStatus(401);
         }
 
+        // Verificar se o user já possui uma sessão aberta
+        const sessaoUsuario = sessoes.findOne({ userId: usuarioExiste._id });
+
+        if (sessaoUsuario) {
+            return res.status(401).send({ message: "Você já está logado, saia para logar novamente" });
+        };
+
+        // Se não tiver sessão aberta, abre uma nova
+        await sessoes.insertOne({
+            token,
+            usuarioId: usuarioExiste._id
+        });
+
+        console.log("token", token);
+
+        res.send({ token });
 
     } catch (err) {
+        console.log("err", err)
         res.sendStatus(500);
     };
 
 });
 
+app.get("/registros", async (req, res) => {
 
+    const registros = [
+        { teste: "oi", data: "agora" },
+    ];
+
+    const { authorization } = req.headers; // Bearer Token
+
+    const token = authorization?.replace("Bearer ", ""); //Substitui o Bearer por nada, pois só precisa do token
+
+    if (!token) {
+        return res.sendStatus(401);
+    };
+
+    try {
+        const sessao = await sessoes.findOne({ token });
+
+        const usuario = await usuarios.findOne({ _id: sessao?.userId });
+
+        if (!usuario) {
+            return res.sendStatus(401);
+        }; 
+
+        delete usuario.password;
+
+        res.send({ registros, usuario });
+    } catch (err) {
+        console.log(err);
+        res.sendStatus(500);
+    }
+
+});
 
 app.listen(5000, () => {
     console.log("Serving running in port: 5000");
