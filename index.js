@@ -3,11 +3,12 @@ import cors from 'cors';
 import { MongoClient } from "mongodb";
 import dotenv from 'dotenv';
 import joi from "joi";
+import bcrypt from "bcrypt";
 
 const cadastroSchema = joi.object({
     nome: joi.string().required().min(3),
-    email: joi.string().required().min(3),
-    senha: joi.string().required().min(3),
+    email: joi.string().email().required(),
+    senha: joi.string().required(),
 });
 
 dotenv.config();
@@ -27,33 +28,71 @@ try {
 
 const db = mongoClient.db("myWallet");
 
-const users = db.collection("usuarios");
+const usuarios = db.collection("usuarios");
 
 app.post("/cadastro", async (req, res) => {
 
     const { nome, email, senha } = req.body;
 
-    const validation = cadastroSchema.validate(
-        { nome, email, senha },
-        { abortEarly: false }
-    );
-
-    if (validation.error) {
-        const errors = validation.error.details.map(detail => detail.message);
-        return res.status(422).send(errors);
-    };
-
-    const novoPerfil =
-    {
-        nome,
-        email,
-        senha
-    };
-
     try {
-        await users.insertOne(novoPerfil); // inserindo no mongo
+
+        const usuarioExiste = await usuarios.findOne({ email });
+
+        if (usuarioExiste) {
+            return res.status(400).send({ message: "Esse usuário já existe" });
+        }
+
+        const validation = cadastroSchema.validate(
+            { nome, email, senha },
+            { abortEarly: false }
+        );
+
+        if (validation.error) {
+            const errors = validation.error.details.map(detail => detail.message);
+            return res.status(400).send(errors);
+        };
+
+        const esconderSenha = bcrypt.hashSync(senha, 10); //criptografar
+        console.log("esconderSenha", esconderSenha);
+
+        const novoPerfil =
+        {
+            nome,
+            email,
+            senha: esconderSenha,
+        };
+
+        await usuarios.insertOne(novoPerfil); // inserindo no mongo
         res.sendStatus(201);
     } catch (err) { //se der errado
+        res.sendStatus(500);
+    };
+
+});
+
+app.post("/login", async (req, res) => {
+
+    const { email, senha } = req.body;
+
+    try {
+
+        const usuarioExiste = await usuarios.findOne({ email });
+
+        if (!usuarioExiste) {
+            return res.status(401).send({ message: "Esse usuário não existe" });
+        };
+
+        res.send({message: `Olá ${usuarioExiste.name}, seja bem vindo(a)!`});
+
+        const senhaOk = bcrypt.compareSync(senha, usuarioExiste.senha); //comparando a senha recebida com a senha do banco de dados
+        console.log("senhaOk", senhaOk);
+
+        if(!senhaOk){
+            return req.sendStatus(401);
+        }
+
+
+    } catch (err) {
         res.sendStatus(500);
     };
 
