@@ -1,6 +1,6 @@
 import express, { json } from "express";
 import cors from 'cors';
-import { MongoClient } from "mongodb";
+import { AutoEncryptionLoggerLevel, MongoClient } from "mongodb";
 import dotenv from 'dotenv';
 import joi from "joi";
 import bcrypt from "bcrypt";
@@ -41,7 +41,7 @@ app.post("/cadastro", async (req, res) => {
         const usuarioExiste = await usuarios.findOne({ email });
 
         if (usuarioExiste) {
-            return res.status(400).send({ message: "Esse usuário já existe" });
+            return res.status(401).send({ message: "Esse usuário já existe" });
         }
 
         const validation = cadastroSchema.validate(
@@ -90,23 +90,23 @@ app.post("/login", async (req, res) => {
         console.log("senhaOk", senhaOk);
 
         if (!senhaOk) {
-            return req.sendStatus(401);
+            return res.status(400).send({ message: "Senha incorreta" });
         }
 
         // Verificar se o user já possui uma sessão aberta
-        const sessaoUsuario = sessoes.findOne({ userId: usuarioExiste._id });
+        const sessaoUsuario = await sessoes.findOne({ userId: usuarioExiste._id });
 
+        console.log(sessaoUsuario);
         if (sessaoUsuario) {
             return res.status(401).send({ message: "Você já está logado, saia para logar novamente" });
         };
+
 
         // Se não tiver sessão aberta, abre uma nova
         await sessoes.insertOne({
             token,
             usuarioId: usuarioExiste._id
         });
-
-        console.log("token", token);
 
         res.send({ token });
 
@@ -124,8 +124,10 @@ app.get("/registros", async (req, res) => {
     ];
 
     const { authorization } = req.headers; // Bearer Token
+    console.log("authorization", authorization);
 
     const token = authorization?.replace("Bearer ", ""); //Substitui o Bearer por nada, pois só precisa do token
+    console.log("token", token);
 
     if (!token) {
         return res.sendStatus(401);
@@ -133,8 +135,12 @@ app.get("/registros", async (req, res) => {
 
     try {
         const sessao = await sessoes.findOne({ token });
+        console.log("sessao", sessao);
 
-        const usuario = await usuarios.findOne({ _id: sessao?.userId });
+        const id = sessao?.usuarioId;
+
+        const usuario = await usuarios.findOne({ _id: id });
+        console.log("usario", usuario)
 
         if (!usuario) {
             return res.sendStatus(401);
