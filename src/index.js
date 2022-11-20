@@ -1,6 +1,5 @@
 import express, { json, response } from "express";
 import cors from 'cors';
-import { MongoClient } from "mongodb";
 import dotenv from 'dotenv';
 import joi from "joi";
 
@@ -23,21 +22,6 @@ dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json()); //receber req do cliente no formato json
-
-const mongoClient = new MongoClient("mongodb://localhost:27017"); //porta do mongo
-
-try {
-    await mongoClient.connect();
-    console.log("MongoDB conectado!");
-} catch (err) {
-    console.log("err mongoDB", err);
-};
-
-const db = mongoClient.db("myWallet");
-
-export const usuarios = db.collection("usuarios");
-export const sessoes = db.collection("sessoes");
-export const transacoes = db.collection("transicoes");
 
 app.post("/cadastro", postCadastro);
 

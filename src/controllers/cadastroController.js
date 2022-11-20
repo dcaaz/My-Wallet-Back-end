@@ -3,7 +3,7 @@ import { v4 as uuidV4 } from "uuid";
 
 import { cadastroSchema } from "../index.js";
 
-import { usuarios, sessoes } from "../index.js";
+import { usuarios, sessoes } from "../database/db.js";
 
 
 export async function postCadastro (req, res) {

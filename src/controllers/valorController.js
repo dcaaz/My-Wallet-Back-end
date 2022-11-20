@@ -1,6 +1,6 @@
 import { valorSchema } from "../index.js";
 
-import { usuarios, sessoes } from "../index.js";
+import { usuarios, sessoes } from "../database/db.js";
 
 import dayjs from "dayjs";
 
