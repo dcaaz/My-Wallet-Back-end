@@ -6,39 +6,13 @@ import dayjs from "dayjs";
 
 export async function getRegistros(req, res) {
 
-    const registros = [
-        { teste: "oi", data: "agora" },
-    ];
+    const usuario = req.usuario;
 
-    const { authorization } = req.headers; // Bearer Token
-    //console.log("authorization", authorization);
-
-    const token = authorization?.replace("Bearer ", ""); //Substitui o Bearer por nada, pois só precisa do token
-    //console.log("token", token);
-
-    if (!token) {
-        return res.sendStatus(401);
-    };
-
-    try {
-        const sessao = await sessoes.findOne({ token });
-        console.log("sessao", sessao);
-
-        const id = sessao?.usuarioId;
-
-        const usuario = await usuarios.findOne({ _id: id });
-        //console.log("usuario registro", usuario)
-
-        if (!usuario) {
-            return res.sendStatus(401);
-        };
+     try {
 
         delete usuario.password;
 
-        //const transferencias = await transacoes.find({usuarioId: sessao.usuarioId}).toArray();
-
-        //res.send({ transferencias, usuario });
-        res.send("OK");
+        res.send({usuario});
 
     } catch (err) {
         console.log(err);
