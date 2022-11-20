@@ -1,38 +1,12 @@
-import express, { json } from "express";
-import cors from 'cors';
-import { AutoEncryptionLoggerLevel, MongoClient } from "mongodb";
-import dotenv from 'dotenv';
-import joi from "joi";
 import bcrypt from "bcrypt";
 import { v4 as uuidV4 } from "uuid";
 
-const cadastroSchema = joi.object({
-    nome: joi.string().required().min(3),
-    email: joi.string().email().required(),
-    senha: joi.string().required(),
-});
+import { cadastroSchema } from "../index.js";
 
-dotenv.config();
+import { usuarios, sessoes } from "../index.js";
 
-const app = express();
-app.use(cors());
-app.use(express.json()); //receber req do cliente no formato json
 
-const mongoClient = new MongoClient("mongodb://localhost:27017"); //porta do mongo
-
-try {
-    await mongoClient.connect();
-    console.log("MongoDB conectado!");
-} catch (err) {
-    console.log("err mongoDB", err);
-};
-
-const db = mongoClient.db("myWallet");
-
-const usuarios = db.collection("usuarios");
-const sessoes = db.collection("sessoes");
-
-app.post("/cadastro", async (req, res) => {
+export async function postCadastro (req, res) {
 
     const { nome, email, senha } = req.body;
 
@@ -70,9 +44,9 @@ app.post("/cadastro", async (req, res) => {
         res.sendStatus(500);
     };
 
-});
+};
 
-app.post("/login", async (req, res) => {
+export async function postLogin (req, res) {
 
     const { email, senha } = req.body;
 
@@ -101,7 +75,6 @@ app.post("/login", async (req, res) => {
             return res.status(401).send({ message: "Você já está logado, saia para logar novamente" });
         };
 
-
         // Se não tiver sessão aberta, abre uma nova
         await sessoes.insertOne({
             token,
@@ -115,47 +88,4 @@ app.post("/login", async (req, res) => {
         res.sendStatus(500);
     };
 
-});
-
-app.get("/registros", async (req, res) => {
-
-    const registros = [
-        { teste: "oi", data: "agora" },
-    ];
-
-    const { authorization } = req.headers; // Bearer Token
-    console.log("authorization", authorization);
-
-    const token = authorization?.replace("Bearer ", ""); //Substitui o Bearer por nada, pois só precisa do token
-    console.log("token", token);
-
-    if (!token) {
-        return res.sendStatus(401);
-    };
-
-    try {
-        const sessao = await sessoes.findOne({ token });
-        console.log("sessao", sessao);
-
-        const id = sessao?.usuarioId;
-
-        const usuario = await usuarios.findOne({ _id: id });
-        console.log("usario", usuario)
-
-        if (!usuario) {
-            return res.sendStatus(401);
-        }; 
-
-        delete usuario.password;
-
-        res.send({ registros, usuario });
-    } catch (err) {
-        console.log(err);
-        res.sendStatus(500);
-    }
-
-});
-
-app.listen(5000, () => {
-    console.log("Serving running in port: 5000");
-}); //verifica/"escuta" se tem alguma solicitação para acessar a porta
+};
