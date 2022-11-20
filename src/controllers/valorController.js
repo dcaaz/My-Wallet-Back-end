@@ -12,7 +12,11 @@ export async function getRegistros(req, res) {
 
         delete usuario.password;
 
-        res.send({usuario});
+        const dadosUsuario = await usuarios.findOne({_id: usuario._id});
+
+        const transacao = await transacoes.find({userId: dadosUsuario.userId}).toArray();
+
+        res.send({usuario, transacao});
 
     } catch (err) {
         console.log(err);
@@ -52,7 +56,7 @@ export async function postEntrada(req, res) {
 
         await transacoes.insertOne(entrada);
 
-        res.send("OK");
+        res.sendStatus(201);
 
     } catch (err) {
         console.log(err);
@@ -92,7 +96,7 @@ export async function postSaida(req, res) {
 
         await transacoes.insertOne(saida);
 
-        res.send("OK");
+        res.sendStatus(201);
 
     } catch (err) {
         console.log(err);
