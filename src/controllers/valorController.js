@@ -1,6 +1,6 @@
 import { valorSchema } from "../index.js";
 
-import { usuarios, sessoes } from "../database/db.js";
+import { transacoes, usuarios } from "../database/db.js";
 
 import dayjs from "dayjs";
 
@@ -23,8 +23,8 @@ export async function getRegistros(req, res) {
 
 export async function postEntrada(req, res) {
     const { valor, descricao } = req.body;
-    const infoUsuario = req.usuario;
-    console.log("usuario entrada", infoUsuario);
+    const usuario = req.usuario;
+    console.log("usuario entrada", usuario);
 
     const dia = dayjs().format("DD/MM");
 
@@ -41,7 +41,7 @@ export async function postEntrada(req, res) {
     try {
 
         const entrada = {
-            usuarioId: infoUsuario._id,
+            usuarioId: usuario._id,
             type: "entrada",
             valor,
             descricao,
@@ -50,7 +50,7 @@ export async function postEntrada(req, res) {
 
         console.log("entrada", entrada);
 
-        await transicoes.insertOne(entrada);
+        await transacoes.insertOne(entrada);
 
         res.send("OK");
 
@@ -63,7 +63,8 @@ export async function postEntrada(req, res) {
 
 export async function postSaida(req, res) {
     const { valor, descricao } = req.body;
-    const infoUsuario = req.usuario;
+    const usuario = req.usuario;
+    console.log("usuario saida", usuario);
 
     const dia = dayjs().format("DD/MM");
 
@@ -80,7 +81,7 @@ export async function postSaida(req, res) {
     try {
 
         const saida = {
-            usuarioId: infoUsuario._id,
+            usuarioId: usuario._id,
             type: "saida",
             valor,
             descricao,
@@ -89,7 +90,7 @@ export async function postSaida(req, res) {
 
         console.log("saidas", saida);
 
-        await transicoes.insertOne(entrada);
+        await transacoes.insertOne(saida);
 
         res.send("OK");
 
