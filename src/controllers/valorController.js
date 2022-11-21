@@ -1,21 +1,18 @@
-import { valorSchema } from "../index.js";
+import { valorSchema } from "../models/valorModels.js";
 
-import { transacoes, usuarios } from "../database/db.js";
+import { transacoes } from "../database/db.js";
 
 import dayjs from "dayjs";
 
 export async function getRegistros(req, res) {
 
     const usuario = req.usuario;
-    console.log("req usuario", usuario)
 
      try {
 
         delete usuario.password;
 
         const transacao = await transacoes.find({usuarioId: usuario._id}).toArray();
-
-        console.log("transacao", transacao)
 
         res.send({usuario, transacao});
 
@@ -29,7 +26,6 @@ export async function getRegistros(req, res) {
 export async function postEntrada(req, res) {
     const { valor, descricao } = req.body;
     const usuario = req.usuario;
-    console.log("usuario entrada", usuario);
 
     const dia = dayjs().format("DD/MM");
 
@@ -69,7 +65,6 @@ export async function postEntrada(req, res) {
 export async function postSaida(req, res) {
     const { valor, descricao } = req.body;
     const usuario = req.usuario;
-    console.log("usuario saida", usuario);
 
     const dia = dayjs().format("DD/MM");
 
@@ -92,8 +87,6 @@ export async function postSaida(req, res) {
             descricao,
             dia
         }
-
-        console.log("saidas", saida);
 
         await transacoes.insertOne(saida);
 

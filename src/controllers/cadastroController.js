@@ -1,10 +1,9 @@
 import bcrypt from "bcrypt";
 import { v4 as uuidV4 } from "uuid";
 
-import { cadastroSchema } from "../index.js";
+import { cadastroSchema } from "../models/cadastroModels.js";
 
 import { usuarios, sessoes } from "../database/db.js";
-
 
 export async function postCadastro (req, res) {
 
@@ -29,7 +28,6 @@ export async function postCadastro (req, res) {
         };
 
         const esconderSenha = bcrypt.hashSync(senha, 10); //criptografar
-        console.log("esconderSenha", esconderSenha);
 
         const novoPerfil =
         {
@@ -61,7 +59,6 @@ export async function postLogin (req, res) {
         };
 
         const senhaOk = bcrypt.compareSync(senha, usuarioExiste.senha); //comparando a senha recebida com a senha do banco de dados
-        console.log("senhaOk", senhaOk);
 
         if (!senhaOk) {
             return res.status(400).send({ message: "Senha incorreta" });
@@ -70,7 +67,6 @@ export async function postLogin (req, res) {
         // Verificar se o user já possui uma sessão aberta
         const sessaoUsuario = await sessoes.findOne({ userId: usuarioExiste._id });
 
-        console.log(sessaoUsuario);
         if (sessaoUsuario) {
             return res.status(401).send({ message: "Você já está logado, saia para logar novamente" });
         };

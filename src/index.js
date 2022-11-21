@@ -1,20 +1,8 @@
 import express, { json, response } from "express";
 import cors from 'cors';
 import dotenv from 'dotenv';
-import joi from "joi";
 import transferenciaRouter from "./routes/valorRoute.js";
 import usuarioRouter from "./routes/cadastroRoute.js";
-
-export const cadastroSchema = joi.object({
-    nome: joi.string().required().min(3),
-    email: joi.string().email().required(),
-    senha: joi.string().required(),
-});
-
-export const valorSchema = joi.object({
-    valor: joi.string().required(),
-    descricao: joi.string().required().max(100)
-});
 
 dotenv.config();
 
