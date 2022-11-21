@@ -7,14 +7,15 @@ import dayjs from "dayjs";
 export async function getRegistros(req, res) {
 
     const usuario = req.usuario;
+    console.log("req usuario", usuario)
 
      try {
 
         delete usuario.password;
 
-        const dadosUsuario = await usuarios.findOne({_id: usuario._id});
+        const transacao = await transacoes.find({usuarioId: usuario._id}).toArray();
 
-        const transacao = await transacoes.find({userId: dadosUsuario.userId}).toArray();
+        console.log("transacao", transacao)
 
         res.send({usuario, transacao});
 
